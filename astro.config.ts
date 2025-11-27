@@ -5,7 +5,7 @@ import vue from '@astrojs/vue';
 import { defineConfig } from 'astro/config';
 import UnoCSS from 'unocss/astro';
 // 正确：从包的主入口导入
-import strapi from '@sensinum/astro-strapi-loader';
+import { generateCollections } from '@sensinum/astro-strapi-loader';
 
 export default defineConfig({
   site: 'https://astro-theme-vitesse.netlify.app/',
