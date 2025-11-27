@@ -11,7 +11,7 @@ export default defineConfig({
   server: {
     port: 1977,
   },
-  output: 'static', // 推荐使用静态生成
+  output: 'static',
   adapter: netlify(),
   integrations: [
     mdx(),
@@ -21,7 +21,7 @@ export default defineConfig({
     }),
     vue(),
     strapi({
-      apiURL: import.meta.env.STRAPI_URL, // 直接使用环境变量
+      apiURL: import.meta.env.STRAPI_URL,
     }),
   ],
   markdown: {
