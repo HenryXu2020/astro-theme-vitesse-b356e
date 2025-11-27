@@ -27,8 +27,10 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^4.2.4",
+    "@astrojs/netlify": "^5.2.1", // 新增：Netlify 适配器
     "@astrojs/rss": "^4.0.11",
     "@astrojs/sitemap": "^3.3.0",
+    "@astrojs/strapi": "^1.0.0", // 新增：Strapi 集成
     "@astrojs/vue": "^5.0.10",
     "@unocss/reset": "66.1.0-beta.11",
     "astro": "^5.6.2",
