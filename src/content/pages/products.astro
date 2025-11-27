@@ -1,0 +1,26 @@
+---
+// src/pages/products.astro
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+
+// 如果您在 Strapi 中有产品数据，可以这样获取
+const strapiProducts = await getCollection('strapi-products');
+---
+
+<Layout title="产品">
+  <h1>我们的产品</h1>
+  
+  {strapiProducts && strapiProducts.length > 0 ? (
+    <div class="products-grid">
+      {strapiProducts.map((product) => (
+        <div class="product-card">
+          <h3>{product.data.name}</h3>
+          <p>{product.data.description}</p>
+          <!-- 产品图片、价格等其他信息 -->
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p>暂无产品信息</p>
+  )}
+</Layout>
