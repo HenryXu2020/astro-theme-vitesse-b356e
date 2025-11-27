@@ -1,0 +1,40 @@
+---
+// src/pages/blog.astro
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro'; // 根据您的主题结构调整
+
+// 获取来自 Strapi 的文章集合
+// 注意：这里的 'strapi-articles' 需要与您在 content/config.ts 中配置的名称一致
+const strapiArticles = await getCollection('strapi-articles');
+---
+
+<Layout title="博客">
+  <h1>博客文章</h1>
+  
+  {strapiArticles.length > 0 ? (
+    <div class="articles-grid">
+      {strapiArticles.map((article) => (
+        <article class="article-card">
+          <h2>{article.data.title}</h2>
+          <p>{article.data.description}</p>
+          <!-- 根据您的 Strapi 数据结构添加更多字段 -->
+          <!-- 例如：{article.data.content}、{article.data.publishedAt} 等 -->
+        </article>
+      ))}
+    </div>
+  ) : (
+    <p>暂无文章</p>
+  )}
+</Layout>
+
+<style>
+  .articles-grid {
+    display: grid;
+    gap: 2rem;
+  }
+  .article-card {
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+  }
+</style>
