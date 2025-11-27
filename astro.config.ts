@@ -1,5 +1,7 @@
 import mdx from '@astrojs/mdx'
+import netlify from '@astrojs/netlify'
 import sitemap from '@astrojs/sitemap'
+import strapi from '@astrojs/strapi'
 import vue from '@astrojs/vue'
 import { defineConfig } from 'astro/config'
 import UnoCSS from 'unocss/astro'
@@ -9,6 +11,8 @@ export default defineConfig({
   server: {
     port: 1977,
   },
+  output: 'static', // 推荐使用静态生成
+  adapter: netlify(),
   integrations: [
     mdx(),
     sitemap(),
@@ -16,6 +20,9 @@ export default defineConfig({
       injectReset: true,
     }),
     vue(),
+    strapi({
+      apiURL: import.meta.env.STRAPI_URL, // 直接使用环境变量
+    }),
   ],
   markdown: {
     shikiConfig: {
