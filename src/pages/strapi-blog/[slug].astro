@@ -1,57 +1,128 @@
 ---
-// src/pages/strapi-blog/[id].astro
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import { fetchStrapi } from '@/lib/strapi';
+// src/pages/strapi-blog/[slug].astro
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import siteConfig from '@/site-config'
 
-// 1. 生成所有Strapi博客的静态路径
-export async function getStaticPaths() {
-  const GET_BLOGS_LIST = `
-    query {
-      blogs {
-        slug // 改为获取 slug 字段
+// 1. 首先需要扩展你的 strapi.js 客户端，添加按slug获取单篇文章的函数
+import { fetchStrapi } from '@/lib/strapi'
+
+// 根据slug获取特定博客文章的函数
+export async function getStrapiBlogBySlug(slug) {
+  const query = `
+    query GetBlogBySlug($slug: String!) {
+      blogs(filters: { slug: { eq: $slug } }) {
+        documentId
+        title
+        publishedAt
+        author
+        slug
+        content  // 注意：这里查询了富文本内容
+        cover {
+          url
+        }
       }
     }
   `;
-  const data = await fetchStrapi({ query: GET_BLOGS_LIST });
-  return data?.blogs?.map((blog) => ({
-    params: { slug: blog.slug }, // 参数名改为 slug
-  })) || [];
+  const data = await fetchStrapi({ query, variables: { slug } });
+  // 返回第一条匹配的文章，因为slug是唯一的
+  const blog = data?.blogs?.[0] || null;
+  
+  if (blog) {
+    // 转换日期并提取封面URL
+    return {
+      id: blog.documentId,
+      title: blog.title,
+      date: new Date(blog.publishedAt),
+      author: blog.author,
+      slug: blog.slug,
+      content: blog.content, // 富文本内容
+      cover: blog.cover?.url,
+    };
+  }
+  return null;
 }
 
-// 2. 获取当前博客的详细内容
-const { slug } = Astro.params; // 获取 URL 中的 slug 参数
-const GET_BLOG_BY_SLUG = `
-  query GetBlog($slug: String!) {
-    blogs(filters: { slug: { eq: $slug } }) { // 使用 filters 进行筛选
-      documentId
-      title
-      publishedAt
-      author
-      content
-      cover { url }
+// 2. 告诉Astro需要为哪些slug生成静态页面
+export async function getStaticPaths() {
+  // 这里需要获取所有文章的slug，我们可以复用之前的函数
+  // 但需要先创建一个只获取slug的简单查询函数
+  const query = `
+    query {
+      blogs {
+        slug
+      }
     }
-  }
-`;
-const data = await fetchStrapi({ query: GET_BLOG_BY_SLUG, variables: { slug } });
-const post = data?.blogs?.[0]; // 注意返回的是数组，取第一项
+  `;
+  const data = await fetchStrapi({ query });
+  const blogs = data?.blogs || [];
+  
+  // 为每篇文章生成一个路径参数
+  return blogs.map((blog) => ({
+    params: { slug: blog.slug },
+    props: { slug: blog.slug }, // 将slug传递给页面组件
+  }));
+}
 
-// 如果未找到文章，返回404页面
+// 3. 页面接收slug作为参数
+const { slug } = Astro.params;
+
+// 4. 获取当前slug对应的文章数据
+const post = await getStrapiBlogBySlug(slug);
+
+// 5. 如果文章不存在，返回404页面
 if (!post) {
   return Astro.redirect('/404');
 }
 ---
 
-<BaseLayout title={post.title} description={`作者：${post.author}`}>
+<BaseLayout title={post.title} description={`A blog post by ${post.author}`}>
   <article class="prose max-w-none">
-    <h1 class="text-3xl font-bold">{post.title}</h1>
-    <div class="text-gray-600 mt-2">
-      作者：{post.author} · 发布时间：{new Date(post.publishedAt).toLocaleDateString()}
+    <header class="mb-10">
+      <h1 class="text-title mb-4">{post.title}</h1>
+      <div class="flex flex-wrap gap-4 items-center text-sm opacity-70">
+        <div class="flex items-center gap-2">
+          <span>By {post.author}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="i-ri-calendar-line"></i>
+          <time>{post.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+        </div>
+      </div>
+    </header>
+    
+    {post.cover && (
+      <img src={post.cover} alt={`Cover image for ${post.title}`} class="w-full rounded-xl mb-10" />
+    )}
+    
+    <!-- 渲染富文本内容 -->
+    <div class="content">
+      {
+        post.content.map((block) => {
+          if (block.type === 'paragraph') {
+            return (
+              <p>
+                {block.children.map((child) => {
+                  if (child.type === 'text') {
+                    // 这里可以扩展以支持加粗、斜体等格式
+                    return child.text;
+                  }
+                  return null;
+                })}
+              </p>
+            );
+          }
+          // 可以在这里添加对其他块类型（如标题、图片、列表）的支持
+          return null;
+        })
+      }
     </div>
-    {
-      post.cover?.url && (
-        <img src={post.cover.url} alt={post.title} class="my-6 rounded-lg w-full" />
-      )
-    }
-    <div set:html={post.content}></div>
+    
+    <hr class="hr-line my-10" />
+    
+    <div class="flex justify-between">
+      <a href="/strapi-blog" class="text-primary hover:underline flex items-center gap-2">
+        <i class="i-ri-arrow-left-line"></i> Back to all posts
+      </a>
+    </div>
   </article>
 </BaseLayout>
