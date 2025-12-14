@@ -1,6 +1,11 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import siteConfig from '@/site-config'
+// 在原有的import语句后，新增导入
+import { getStrapiBlogs } from '@/lib/strapi';
+// 获取Strapi博客列表
+const strapiBlogs = await getStrapiBlogs();
+const latestStrapiBlogs = strapiBlogs.slice(0, 3); // 只显示最新的3篇
 ---
 
 <BaseLayout description={siteConfig.description}>
@@ -59,6 +64,28 @@ import siteConfig from '@/site-config'
       for me.
     </p>
     <hr class="hr-line" />
+<h2 class="text-2xl font-bold mt-8">最新博客动态</h2>
+{
+  latestStrapiBlogs.length > 0 ? (
+    <div class="grid gap-4 mt-4">
+      {
+        latestStrapiBlogs.map((post) => (
+          <a
+            href={`/strapi-blog/${post.id}`}
+            class="block p-4 border rounded-lg hover:shadow-md transition-shadow"
+          >
+            <h3 class="text-xl font-semibold">{post.title}</h3>
+            <p class="text-sm text-gray-600 mt-1">
+              作者：{post.author} | 发布时间：{post.date.toLocaleDateString()}
+            </p>
+          </a>
+        ))
+      }
+    </div>
+  ) : (
+    <p class="mt-4 text-gray-500">暂无博客文章。</p>
+  )
+}
     <p>Find me on</p>
     <p class="flex gap-x-4 gap-y-2 flex-wrap">
       {
