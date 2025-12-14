@@ -8,14 +8,14 @@ export async function getStaticPaths() {
   const query = `
     query {
       blogs {
-        documentId
+        slug
       }
     }
   `;
   const data = await fetchStrapi({ query });
 
   return data?.blogs?.map((blog) => ({
-    params: { id: blog.documentId },
+    params: { slug: blog.slug },
   })) || [];
 }
 
