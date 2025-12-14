@@ -1,128 +1,63 @@
 ---
-// src/pages/strapi-blog/[slug].astro
 import BaseLayout from '@/layouts/BaseLayout.astro'
-import siteConfig from '@/site-config'
+import { getStrapiBlogs, getStrapiBlogBySlug } from '@/lib/strapi'
 
-// 1. 首先需要扩展你的 strapi.js 客户端，添加按slug获取单篇文章的函数
-import { fetchStrapi } from '@/lib/strapi'
-
-// 根据slug获取特定博客文章的函数
-export async function getStrapiBlogBySlug(slug) {
-  const query = `
-    query GetBlogBySlug($slug: String!) {
-      blogs(filters: { slug: { eq: $slug } }) {
-        documentId
-        title
-        publishedAt
-        author
-        slug
-        content  // 注意：这里查询了富文本内容
-        cover {
-          url
-        }
-      }
-    }
-  `;
-  const data = await fetchStrapi({ query, variables: { slug } });
-  // 返回第一条匹配的文章，因为slug是唯一的
-  const blog = data?.blogs?.[0] || null;
-  
-  if (blog) {
-    // 转换日期并提取封面URL
-    return {
-      id: blog.documentId,
-      title: blog.title,
-      date: new Date(blog.publishedAt),
-      author: blog.author,
-      slug: blog.slug,
-      content: blog.content, // 富文本内容
-      cover: blog.cover?.url,
-    };
-  }
-  return null;
-}
-
-// 2. 告诉Astro需要为哪些slug生成静态页面
+// 1. 告诉Astro需要为哪些slug生成静态页面
 export async function getStaticPaths() {
-  // 这里需要获取所有文章的slug，我们可以复用之前的函数
-  // 但需要先创建一个只获取slug的简单查询函数
-  const query = `
-    query {
-      blogs {
-        slug
-      }
-    }
-  `;
-  const data = await fetchStrapi({ query });
-  const blogs = data?.blogs || [];
-  
-  // 为每篇文章生成一个路径参数
+  const blogs = await getStrapiBlogs();
   return blogs.map((blog) => ({
     params: { slug: blog.slug },
-    props: { slug: blog.slug }, // 将slug传递给页面组件
+    props: { blog }, // 将整篇文章数据作为props传递
   }));
 }
 
-// 3. 页面接收slug作为参数
-const { slug } = Astro.params;
-
-// 4. 获取当前slug对应的文章数据
-const post = await getStrapiBlogBySlug(slug);
-
-// 5. 如果文章不存在，返回404页面
-if (!post) {
-  return Astro.redirect('/404');
-}
+// 2. 从Astro接收props
+const { blog } = Astro.props;
 ---
 
-<BaseLayout title={post.title} description={`A blog post by ${post.author}`}>
+<BaseLayout title={blog.title} description={blog.excerpt}>
   <article class="prose max-w-none">
-    <header class="mb-10">
-      <h1 class="text-title mb-4">{post.title}</h1>
-      <div class="flex flex-wrap gap-4 items-center text-sm opacity-70">
-        <div class="flex items-center gap-2">
-          <span>By {post.author}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <i class="i-ri-calendar-line"></i>
-          <time>{post.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
-        </div>
-      </div>
-    </header>
-    
-    {post.cover && (
-      <img src={post.cover} alt={`Cover image for ${post.title}`} class="w-full rounded-xl mb-10" />
+    {blog.cover?.url && (
+      <img src={blog.cover.url} alt={`Cover for ${blog.title}`} class="rounded w-full mb-8" />
     )}
+    <h1 class="!mb-2">{blog.title}</h1>
+    <p class="!mt-0 text-lg text-gray-600">By {blog.author} • Published on {new Date(blog.publishedAt).toDateString()}</p>
     
-    <!-- 渲染富文本内容 -->
-    <div class="content">
+    <hr class="hr-line" />
+    
+    {/* 渲染富文本内容区块 */}
+    <div class="strapi-content">
       {
-        post.content.map((block) => {
+        blog.content && blog.content.map((block, index) => {
           if (block.type === 'paragraph') {
             return (
-              <p>
-                {block.children.map((child) => {
+              <p key={index}>
+                {block.children.map((child, childIndex) => {
                   if (child.type === 'text') {
-                    // 这里可以扩展以支持加粗、斜体等格式
-                    return child.text;
+                    // 这里可以扩展处理加粗、斜体等格式
+                    return <span key={childIndex}>{child.text}</span>;
                   }
                   return null;
                 })}
               </p>
             );
           }
-          // 可以在这里添加对其他块类型（如标题、图片、列表）的支持
+          // 可以在此处添加对标题、列表等其他块类型的支持
           return null;
         })
       }
     </div>
     
-    <hr class="hr-line my-10" />
+    <hr class="hr-line" />
     
-    <div class="flex justify-between">
-      <a href="/strapi-blog" class="text-primary hover:underline flex items-center gap-2">
-        <i class="i-ri-arrow-left-line"></i> Back to all posts
-      </a>
-    </div>
+    <a href="/strapi-blog" class="prose-link">← Back to all Strapi Blogs</a>
   </article>
 </BaseLayout>
+
+<style>
+/* 为渲染的内容添加一些基本样式 */
+.strapi-content p {
+  margin-bottom: 1em;
+  line-height: 1.6;
+}
+</style>
