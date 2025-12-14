@@ -5,38 +5,35 @@ import { fetchStrapi } from '@/lib/strapi';
 
 // 1. 生成所有Strapi博客的静态路径
 export async function getStaticPaths() {
-  const query = `
+  const GET_BLOGS_LIST = `
     query {
       blogs {
-        slug
+        slug // 改为获取 slug 字段
       }
     }
   `;
-  const data = await fetchStrapi({ query });
-
+  const data = await fetchStrapi({ query: GET_BLOGS_LIST });
   return data?.blogs?.map((blog) => ({
-    params: { slug: blog.slug },
+    params: { slug: blog.slug }, // 参数名改为 slug
   })) || [];
 }
 
 // 2. 获取当前博客的详细内容
-const { id } = Astro.params;
-const query = `
-  query GetBlog($id: ID!) {
-    blog(documentId: $id) {
+const { slug } = Astro.params; // 获取 URL 中的 slug 参数
+const GET_BLOG_BY_SLUG = `
+  query GetBlog($slug: String!) {
+    blogs(filters: { slug: { eq: $slug } }) { // 使用 filters 进行筛选
+      documentId
       title
       publishedAt
       author
       content
-      cover {
-        url
-      }
+      cover { url }
     }
   }
 `;
-
-const data = await fetchStrapi({ query, variables: { id } });
-const post = data?.blog;
+const data = await fetchStrapi({ query: GET_BLOG_BY_SLUG, variables: { slug } });
+const post = data?.blogs?.[0]; // 注意返回的是数组，取第一项
 
 // 如果未找到文章，返回404页面
 if (!post) {
