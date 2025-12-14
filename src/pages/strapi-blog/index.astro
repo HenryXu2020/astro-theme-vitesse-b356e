@@ -1,49 +1,39 @@
 ---
-// src/pages/strapi-blog/index.astro
 import BaseLayout from '@/layouts/BaseLayout.astro'
-import siteConfig from '@/site-config'
 import { getStrapiBlogs } from '@/lib/strapi'
-
-// 获取所有博客文章
-const posts = await getStrapiBlogs()
+// 获取所有文章
+const blogs = await getStrapiBlogs()
 ---
 
-<BaseLayout title="Strapi Blog" description="All blog posts fetched from Strapi CMS.">
-  <h1 class="text-title">Strapi Blog</h1>
-  <p class="opacity-80">All articles are managed and delivered from Strapi.</p>
-  
-  <hr class="hr-line my-8" />
-  
-  {
-    posts.length > 0 ? (
-      <ul class="space-y-6">
-        {posts.map((post) => (
-          <li class="border-b pb-6 border-gray-200 dark:border-gray-800">
-            <article>
-              <h2 class="text-2xl font-bold mb-2">
-                <a href={`/strapi-blog/${post.slug}`} class="text-primary hover:underline">
-                  {post.title}
+<BaseLayout title="Strapi Blog" description="Blog posts loaded from Strapi CMS.">
+  <article class="prose">
+    <h1>Strapi Blog</h1>
+    <p>All posts are managed and delivered from Strapi.</p>
+    
+    <hr class="hr-line" />
+    
+    {
+      blogs.length > 0 ? (
+        <ul class="space-y-8">
+          {blogs.map((blog) => (
+            <li class="border-b pb-6">
+              <h2 class="!mt-0 !mb-2">
+                <a href={`/strapi-blog/${blog.slug}`} class="prose-link no-underline hover:underline">
+                  {blog.title}
                 </a>
               </h2>
-              <div class="flex gap-4 text-sm opacity-60 mb-3">
-                <span>By {post.author}</span>
-                <span>|</span>
-                <time>{post.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
-              </div>
-              {post.cover && (
-                <img src={post.cover} alt={`Cover for ${post.title}`} class="rounded-lg mb-4 w-full max-w-2xl" />
+              <p class="!mt-0 text-sm text-gray-500">By {blog.author} • {new Date(blog.publishedAt).toDateString()}</p>
+              {blog.cover?.url && (
+                <img src={blog.cover.url} alt={`Cover for ${blog.title}`} class="rounded w-full max-w-2xl" />
               )}
-              <p class="mt-2">
-                <a href={`/strapi-blog/${post.slug}`} class="text-primary font-medium hover:underline">
-                  Read full article →
-                </a>
-              </p>
-            </article>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <p>No blog posts have been published yet.</p>
-    )
-  }
+              {blog.excerpt && <p>{blog.excerpt}</p>}
+              <a href={`/strapi-blog/${blog.slug}`} class="text-sm font-semibold prose-link">Read more →</a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No blog posts found.</p>
+      )
+    }
+  </article>
 </BaseLayout>
