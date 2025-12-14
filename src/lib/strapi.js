@@ -32,6 +32,7 @@ export async function getStrapiBlogs() {
         title
         publishedAt
         author
+        slug // 新增：查询slug字段
         cover {
           url
         }
@@ -39,14 +40,12 @@ export async function getStrapiBlogs() {
     }
   `;
   const data = await fetchStrapi({ query });
-  // 适配数据格式，与原有getPosts函数返回的post结构类似
   return data?.blogs?.map(blog => ({
     id: blog.documentId,
     title: blog.title,
     date: new Date(blog.publishedAt),
     author: blog.author,
+    slug: blog.slug, // 新增：将slug映射到返回对象中
     cover: blog.cover?.url,
-    // 为兼容原有组件，可以添加一个虚拟的slug
-    slug: `/strapi-blog/${blog.documentId}`
   })) || [];
 }
