@@ -1,1 +1,30 @@
+---
+// src/pages/strapi-blog/index.astro
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getStrapiBlogs } from '@/lib/strapi';
 
+const allStrapiBlogs = await getStrapiBlogs();
+---
+
+<BaseLayout title="Strapi博客" description="来自Strapi CMS的博客文章">
+  <h1 class="text-3xl font-bold mb-8">Strapi博客</h1>
+  <div class="space-y-6">
+    {
+      allStrapiBlogs.map((post) => (
+        <article class="border-b pb-6">
+          <h2 class="text-2xl font-semibold">
+            <a href={`/strapi-blog/${post.id}`} class="hover:text-blue-600">{post.title}</a>
+          </h2>
+          <p class="text-sm text-gray-500 mt-1">
+            {post.date.toLocaleDateString()} · 作者：{post.author}
+          </p>
+          {
+            post.cover && (
+              <img src={post.cover} alt={post.title} class="mt-3 rounded max-w-md" />
+            )
+          }
+        </article>
+      ))
+    }
+  </div>
+</BaseLayout>
