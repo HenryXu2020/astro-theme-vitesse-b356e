@@ -1,15 +1,10 @@
 ---
-// --- 第一部分：现有导入保持不变 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import siteConfig from '@/site-config'
-// --- 新增导入：引入Strapi博客获取函数 ---
+// 1. 导入Strapi函数
 import { getStrapiBlogs } from '@/lib/strapi'
-
-// --- 第二部分：获取数据 ---
-// 获取所有Strapi博客文章，并按日期倒序排列
-const allStrapiBlogs = await getStrapiBlogs()
-// 取出最新的3篇文章用于首页展示
-const latestStrapiBlogs = allStrapiBlogs.slice(0, 3)
+// 2. 在构建时获取数据
+const latestStrapiBlogs = await getStrapiBlogs()
 ---
 <BaseLayout description={siteConfig.description}>
   <article class="prose">
@@ -19,27 +14,22 @@ const latestStrapiBlogs = allStrapiBlogs.slice(0, 3)
     <!-- ... 中间你原有的所有段落内容保持不变 ... -->
     
     <!-- --- 新增部分：最新Strapi博客列表 --- -->
-    <hr class="hr-line" />
-    <h2>Latest from Strapi Blog</h2>
-    {
-      latestStrapiBlogs.length > 0 ? (
-        <ul>
-          {latestStrapiBlogs.map((post) => (
-            <li>
-              <a href={`/strapi-blog/${post.slug}`} class="prose-link">
-                {post.title}
-              </a>
-              <small> – By {post.author} on {post.date.toLocaleDateString()}</small>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No blog posts yet.</p>
-      )
-    }
-    <p>
-      <a href="/strapi-blog" class="prose-link">View all Strapi Blogs →</a>
-    </p>
+<hr class="hr-line" />
+<h2>Latest from Strapi Blog</h2>
+{
+  latestStrapiBlogs.length > 0 ? (
+    <ul>
+      {latestStrapiBlogs.map((blog) => (
+        <li>
+          <a href={`/strapi-blog/${blog.slug}`} class="prose-link">{blog.title}</a>
+          {blog.excerpt && <p class="text-sm opacity-75">{blog.excerpt}</p>}
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>No blog posts yet.</p>
+  )
+}
     <!-- --- 新增部分结束 --- -->
     
     <hr class="hr-line" />
