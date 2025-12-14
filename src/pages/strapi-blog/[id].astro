@@ -52,6 +52,6 @@ if (!post) {
         <img src={post.cover.url} alt={post.title} class="my-6 rounded-lg w-full" />
       )
     }
-    <div class="mt-6" set:html={post.content}></div>
+    <div set:html={post.content}></div>
   </article>
 </BaseLayout>
