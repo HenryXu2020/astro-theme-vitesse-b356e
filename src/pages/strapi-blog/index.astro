@@ -1,41 +1,26 @@
 ---
-// src/pages/strapi-blog/index.astro 前端逻辑部分
+// src/pages/strapi-blog/index.astro
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { fetchStrapi } from '@/lib/strapi';
+import { getStrapiBlogs } from '@/lib/strapi';
 
-// 查询时，确保请求 slug 字段
-const GET_BLOGS = `
-  query {
-    blogs(sort: "publishedAt:desc") {
-      documentId
-      title
-      publishedAt
-      author
-      cover { url }
-      slug // 确保查询了 slug 字段
-    }
-  }
-`;
-const data = await fetchStrapi({ query: GET_BLOGS });
-const allStrapiBlogs = data?.blogs || [];
+const allStrapiBlogs = await getStrapiBlogs();
 ---
 
 <BaseLayout title="Strapi博客" description="来自Strapi CMS的博客文章">
   <h1 class="text-3xl font-bold mb-8">Strapi博客</h1>
   <div class="space-y-6">
     {
-      allStrapiBlogs.map((blog) => (
+      allStrapiBlogs.map((post) => (
         <article class="border-b pb-6">
           <h2 class="text-2xl font-semibold">
-            <!-- 关键修改：将链接从 /strapi-blog/${blog.documentId} 改为 /strapi-blog/${blog.slug} -->
-            <a href={`/strapi-blog/${blog.slug}`} class="hover:text-blue-600">{blog.title}</a>
+            <a href={`/strapi-blog/${post.slug}`} class="hover:text-blue-600">{post.title}</a>
           </h2>
           <p class="text-sm text-gray-500 mt-1">
-            {new Date(blog.publishedAt).toLocaleDateString()} · 作者：{blog.author}
+            {post.date.toLocaleDateString()} · 作者：{post.author}
           </p>
           {
-            blog.cover?.url && (
-              <img src={blog.cover.url} alt={blog.title} class="mt-3 rounded max-w-md" />
+            post.cover && (
+              <img src={post.cover} alt={post.title} class="mt-3 rounded max-w-md" />
             )
           }
         </article>
