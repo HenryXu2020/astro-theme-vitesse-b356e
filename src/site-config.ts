@@ -59,6 +59,10 @@ export const siteConfig = {
         text: 'Projects',
         href: '/projects',
       },
+      {
+        text: 'Strapi Blog',
+        href: '/strapi-blog',
+      },
     ],
   },
   page: {
