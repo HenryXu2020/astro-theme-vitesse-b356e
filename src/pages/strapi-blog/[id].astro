@@ -1,1 +1,60 @@
+---
+// src/pages/strapi-blog/[id].astro
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { fetchStrapi } from '@/lib/strapi';
 
+// 1. 生成所有Strapi博客的静态路径
+export async function getStaticPaths() {
+  const query = `
+    query {
+      blogs {
+        documentId
+      }
+    }
+  `;
+  const data = await fetchStrapi({ query });
+
+  return data?.blogs?.map((blog) => ({
+    params: { id: blog.documentId },
+  })) || [];
+}
+
+// 2. 获取当前博客的详细内容
+const { id } = Astro.params;
+const query = `
+  query GetBlog($id: ID!) {
+    blog(documentId: $id) {
+      title
+      publishedAt
+      author
+      content
+      cover {
+        url
+      }
+    }
+  }
+`;
+
+const data = await fetchStrapi({ query, variables: { id } });
+const post = data?.blog;
+
+// 如果未找到文章，返回404页面
+if (!post) {
+  return Astro.redirect('/404');
+}
+---
+
+<BaseLayout title={post.title} description={`作者：${post.author}`}>
+  <article class="prose max-w-none">
+    <h1 class="text-3xl font-bold">{post.title}</h1>
+    <div class="text-gray-600 mt-2">
+      作者：{post.author} · 发布时间：{new Date(post.publishedAt).toLocaleDateString()}
+    </div>
+    {
+      post.cover?.url && (
+        <img src={post.cover.url} alt={post.title} class="my-6 rounded-lg w-full" />
+      )
+    }
+    <div class="mt-6" set:html={post.content}></div>
+  </article>
+</BaseLayout>
