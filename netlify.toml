@@ -1,1 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
 
+# 启用构建插件以优化缓存
+[[plugins]]
+  package = "@netlify/plugin-cache"
+
+# 可以指定自定义的缓存目录（根据你的构建工具调整）
+#  [[plugins.inputs]]
+#    paths = ["node_modules", ".astro", "dist"]
